@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -13,19 +14,22 @@ namespace NotesApp.ViewModel
 {
     public class NotesVM : INotifyPropertyChanged
     {
+        // Commands
         public NewNotebookCommand NewNotebookCommand { get; set; }
         public NewNoteCommand NewNoteCommand { get; set; }
         public EditCommand EditCommand { get; set; }
         public EndEditingCommand EndEditingCommand { get; set; }
         //public SpeechCommand SpeechCommand { get; set; }
 
+        // Events
         public event PropertyChangedEventHandler PropertyChanged;
+        public event EventHandler SelectedNoteChanged;
 
+        // Lista de objetos com seus observables que sao usados na listagem da view
         public ObservableCollection<Note> Notes { get; set; }
-
-
         public ObservableCollection<Notebook> Notebooks { get; set; }
 
+        // Propriedades usadas na view
         private Notebook selectedNotebook;
         public Notebook SelectedNotebook
         {
@@ -39,7 +43,6 @@ namespace NotesApp.ViewModel
         }
 
         private Visibility isRenameNotebookVisible;
-
         public Visibility IsRenameNotebookVisible
         {
             get { return isRenameNotebookVisible; }
@@ -47,6 +50,18 @@ namespace NotesApp.ViewModel
             { 
                 isRenameNotebookVisible = value;
                 OnPropertyChanged("IsRenameNotebookVisible");
+            }
+        }
+
+        private Note selectedNote;
+        public Note SelectedNote
+        {
+            get { return selectedNote; }
+            set 
+            { 
+                selectedNote = value;
+                OnPropertyChanged("SelectedNote");
+                SelectedNoteChanged?.Invoke(this, new EventArgs());
             }
         }
 

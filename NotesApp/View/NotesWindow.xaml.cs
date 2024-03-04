@@ -1,7 +1,9 @@
 ﻿using Microsoft.CognitiveServices.Speech;
 using Microsoft.CognitiveServices.Speech.Audio;
+using NotesApp.ViewModel;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.Remoting.Channels;
 using System.Text;
@@ -24,6 +26,7 @@ namespace NotesApp.View
     /// </summary>
     public partial class NotesWindow : Window
     {
+        NotesVM viewModel;
 
         public NotesWindow()
         {
@@ -33,6 +36,9 @@ namespace NotesApp.View
 
             List<double> fontSizes = new List<double>() { 8, 9, 10, 11, 12, 14, 16, 28, 48, 72 };
             fontSizeComboBox.ItemsSource = fontSizes;
+
+            viewModel = Resources["vm"] as NotesVM;
+            viewModel.SelectedNoteChanged += ViewModel_SelectedNoteChanged;
         }
 
         
@@ -58,9 +64,7 @@ namespace NotesApp.View
             {
                 var result = await recognizer.RecognizeOnceAsync();
                 contentRichTextBox.Document.Blocks.Add(new Paragraph(new Run(result.Text)));
-            }            
-
-            
+            }         
         }
 
         private void ContentRichTextBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -137,6 +141,36 @@ namespace NotesApp.View
         {
             if (fontSizeComboBox.Text != string.Empty)
                 contentRichTextBox.Selection.ApplyPropertyValue(Inline.FontSizeProperty, fontSizeComboBox.Text);
+        }
+
+        private void SaveButton_Click(object sender, RoutedEventArgs e)
+        {
+            string rtfFile = System.IO.Path.Combine(Environment.CurrentDirectory, $"note_{viewModel.SelectedNote.Id}.rtf");
+            viewModel.SelectedNote.FileLocation = rtfFile;
+            DatabaseHelper.Update(viewModel.SelectedNote);
+
+            FileStream fileStream = new FileStream(rtfFile, FileMode.Create);
+            var content = new TextRange(contentRichTextBox.Document.ContentStart, contentRichTextBox.Document.ContentEnd);
+            content.Save(fileStream, DataFormats.Rtf);
+            fileStream.Close();
+
+        }
+        private void ViewModel_SelectedNoteChanged(object sender, EventArgs e)
+        {
+            contentRichTextBox.Document.Blocks.Clear();
+
+            if (viewModel.SelectedNote != null)
+            {
+                string fileLocation = viewModel.SelectedNote.FileLocation;
+
+                if (!String.IsNullOrEmpty(fileLocation))
+                {
+                    FileStream fileStream = new FileStream(fileLocation, FileMode.Open);
+                    var content = new TextRange(contentRichTextBox.Document.ContentStart, contentRichTextBox.Document.ContentEnd);
+                    content.Load(fileStream, DataFormats.Rtf);
+                    fileStream.Close();
+                }
+            }
         }
     }
 }
