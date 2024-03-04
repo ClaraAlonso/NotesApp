@@ -3,17 +3,23 @@ using NotesApp.ViewModel.Commands;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace NotesApp.ViewModel
 {
-    public class NotesVM
+    public class NotesVM : INotifyPropertyChanged
     {
         public NewNotebookCommand NewNotebookCommand { get; set; }
         public NewNoteCommand NewNoteCommand { get; set; }
+        public EditCommand EditCommand { get; set; }
+        public EndEditingCommand EndEditingCommand { get; set; }
         //public SpeechCommand SpeechCommand { get; set; }
+
+        public event PropertyChangedEventHandler PropertyChanged;
 
         public ObservableCollection<Note> Notes { get; set; }
 
@@ -27,20 +33,42 @@ namespace NotesApp.ViewModel
             set
             {
                 selectedNotebook = value;
+                OnPropertyChanged("SelectedNotebook");
                 ReadNotes();
             }
-        }      
+        }
+
+        private Visibility isRenameNotebookVisible;
+
+        public Visibility IsRenameNotebookVisible
+        {
+            get { return isRenameNotebookVisible; }
+            set 
+            { 
+                isRenameNotebookVisible = value;
+                OnPropertyChanged("IsRenameNotebookVisible");
+            }
+        }
+
 
         public NotesVM()
         {
             NewNotebookCommand = new NewNotebookCommand(this);
             NewNoteCommand = new NewNoteCommand(this);
+            EditCommand = new EditCommand(this);
+            EndEditingCommand = new EndEditingCommand(this);
             //SpeechCommand = new SpeechCommand(this);
 
             Notebooks = new ObservableCollection<Notebook>();
             Notes = new ObservableCollection<Note>();
 
+            isRenameNotebookVisible = Visibility.Collapsed;
+
             ReadNotebooks();
+        }
+        private void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         public void CreateNotebook()
@@ -93,6 +121,17 @@ namespace NotesApp.ViewModel
             }
         }
 
+        public void StartEditing() 
+        {
+            IsRenameNotebookVisible = Visibility.Visible;
+        }
+
+        public void StopEditing(Notebook notebook)
+        {
+            IsRenameNotebookVisible = Visibility.Collapsed;
+            DatabaseHelper.Update(notebook);
+            ReadNotebooks();    
+        }
         //public async void SpeechToText() 
         //{
         //    var teste = await SpeechHelper.SpeechToTextAzureAsync();

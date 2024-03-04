@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:local="clr-namespace:NotesApp.View"
         xmlns:vm="clr-namespace:NotesApp.ViewModel" 
         xmlns:uc="clr-namespace:NotesApp.View.UserControls"
@@ -37,7 +38,29 @@
                   ItemsSource="{Binding Notebooks}">
             <ListView.ItemTemplate>
                 <DataTemplate>
-                    <uc:DisplayNotebook Notebook="{Binding}"/>
+                    <Grid>
+                        <uc:DisplayNotebook Notebook="{Binding}">
+                            <uc:DisplayNotebook.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Rename"
+                                              Command="{Binding Source={StaticResource vm}, Path=EditCommand }"/>
+                                </ContextMenu>
+                            </uc:DisplayNotebook.ContextMenu>
+                        </uc:DisplayNotebook>
+                        <TextBox Text="{Binding Name}"
+                            Visibility="{Binding Source={StaticResource vm}, Path=IsRenameNotebookVisible}">
+                            <i:Interaction.Triggers>
+                                <i:EventTrigger EventName="LostFocus">
+                                    <i:InvokeCommandAction Command="{Binding Source={StaticResource vm}, Path= EndEditingCommand}"
+                                                           CommandParameter="{Binding}"/>
+                                </i:EventTrigger>
+                                <!--<i:KeyTrigger Key="Enter">
+                                    <i:InvokeCommandAction Command="{Binding Source={StaticResource vm}, Path= EndEditingCommand}"
+                                                           CommandParameter="{Binding}"/>
+                                </i:KeyTrigger>-->
+                            </i:Interaction.Triggers>
+                        </TextBox>
+                    </Grid>
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>
